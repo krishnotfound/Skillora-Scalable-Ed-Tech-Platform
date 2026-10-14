@@ -771,5 +771,3 @@ GitHub: https://github.com/Vedant8075
 # ⭐ Support
 
 If you found this project useful, consider giving it a ⭐ on GitHub.
-#   S k i l l o r a - S c a l a b l e - E d - T e c h - P l a t f o r m  
- 
