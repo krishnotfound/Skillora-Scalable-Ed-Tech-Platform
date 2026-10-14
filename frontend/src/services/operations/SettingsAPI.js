@@ -1,0 +1,123 @@
+import { toast } from "react-hot-toast"
+
+import { useProfileStore } from "../../store/useStore"
+import { apiConnector } from "../apiConnector"
+import { settingsEndpoints } from "../apis"
+import { logout } from "./authAPI" 
+
+const {
+  UPDATE_DISPLAY_PICTURE_API,
+  UPDATE_PROFILE_API,
+  CHANGE_PASSWORD_API,
+  DELETE_PROFILE_API,
+} = settingsEndpoints
+
+export async function updateDisplayPicture(token, formData) {
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector(
+      "PUT",
+      UPDATE_DISPLAY_PICTURE_API,
+      formData,
+      {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      }
+    )
+    // response logged in dev only when needed
+
+    if (!response?.data?.success) {
+      throw new Error(response?.data?.message || "Could not update display picture")
+    }
+
+    useProfileStore.getState().setUser(response.data.data)
+    toast.success("Display Picture Updated Successfully")
+    return response.data
+  } catch (error) {
+    console.log("UPDATE_DISPLAY_PICTURE_API API ERROR............", error)
+    toast.error("Could Not Update Display Picture")
+    return null
+  } finally {
+    toast.dismiss(toastId)
+  }
+}
+
+export async function updateProfile(token, formData) {
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("PUT", UPDATE_PROFILE_API, formData, {
+      Authorization: `Bearer ${token}`,
+    })
+    // response logged in dev only when needed
+
+    if (!response.data.success) {
+      throw new Error(response.data.message)
+    }
+
+    const profileData = response.data.data;     
+    const currentUser = useProfileStore.getState().user;
+
+    const userImage = profileData.image
+      ? profileData.image
+      : `https://api.dicebear.com/5.x/initials/svg?seed=${currentUser?.firstName} ${currentUser?.lastName}`
+  
+      
+    const updatedUser = { 
+    ...currentUser, 
+    additionalDetails: {
+      ...currentUser?.additionalDetails,
+      ...profileData, 
+    },
+  };
+
+  useProfileStore.getState().setUser(updatedUser);
+    
+    toast.success("Profile Updated Successfully")
+  } catch (error) {
+    console.log("UPDATE_PROFILE_API API ERROR............", error)
+    toast.error("Could Not Update Profile")
+  }
+  toast.dismiss(toastId)
+}
+
+
+export async function changePassword(token, formData) {
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("POST", CHANGE_PASSWORD_API, formData, {
+      Authorization: `Bearer ${token}`,
+    })
+    // response logged in dev only when needed
+
+    if (!response.data.success) {
+      throw new Error(response.data.message)
+    }
+    toast.success("Password Changed Successfully")
+  } catch (error) {
+    console.log("CHANGE_PASSWORD_API API ERROR............", error)
+    toast.error(error.response.data.message)
+  }
+  toast.dismiss(toastId)
+}
+
+export async function deleteProfile(token, navigate) {
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("DELETE", DELETE_PROFILE_API, null, {
+      Authorization: `Bearer ${token}`,
+    })
+    // response logged in dev only when needed
+
+    if (!response.data.success) {
+      throw new Error(response.data.message)
+    }
+    toast.success("Profile Deleted Successfully")
+    
+    logout(navigate)
+  } catch (error) {
+    console.log("DELETE_PROFILE_API API ERROR............", error)
+    console.log(error)
+    toast.error("Could Not Delete Profile")
+  }
+  toast.dismiss(toastId)
+}
